@@ -56,6 +56,8 @@ export default defineConfigWithVueTs(
             'resources/js/actions/**',
             'resources/js/components/ui/*',
             'resources/js/routes/**',
+            'script.js',
+            'script.cjs',
         ],
     },
     prettier, // Turn off all rules that might conflict with Prettier

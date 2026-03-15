@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { Bell, Check, Trash2, X, Info, AlertTriangle, CheckCircle, AlertCircle, Clock, Mail } from 'lucide-vue-next';
-import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import { Bell, Check, Trash2, Info, AlertTriangle, CheckCircle, AlertCircle, Clock } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,15 +19,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 
 interface Notification {
     id: string;
@@ -34,7 +32,7 @@ interface Notification {
     created_at: string;
 }
 
-const props = defineProps<{
+defineProps<{
     userId: number;
 }>();
 
@@ -44,10 +42,6 @@ const isLoading = ref(false);
 const isOpen = ref(false);
 const showModal = ref(false);
 const selectedNotification = ref<Notification | null>(null);
-
-const unreadNotifications = computed(() =>
-    notifications.value.filter(n => !n.read_at)
-);
 
 // Refresh list from server when dropdown is opened
 watch(isOpen, (opened) => {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import NotificationDropdown from '@/components/NotificationDropdown.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { usePage } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 
 withDefaults(
