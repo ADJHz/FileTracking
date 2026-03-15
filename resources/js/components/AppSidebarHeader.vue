@@ -20,9 +20,9 @@ const user = page.props.auth?.user;
 
 <template>
     <header
-        class="flex h-16 shrink-0 items-center gap-2 border-b border-white/40 bg-sidebar px-6 shadow-[inset_1px_0_0_rgba(255,255,255,0.22)] md:border-l md:border-l-white/50 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
+        class="flex h-16 shrink-0 items-center gap-2 border-b border-white/40 bg-sidebar px-6 text-white shadow-[inset_1px_0_0_rgba(255,255,255,0.22)] md:border-l md:border-l-white/50 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4 [&_button:hover]:!bg-dorado-400/20 [&_a:hover]:!text-dorado-300"
     >
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 [&_*]:!text-white [&_svg]:!text-white">
             <SidebarTrigger class="-ml-1" />
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />

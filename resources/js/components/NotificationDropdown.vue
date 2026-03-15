@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Bell, Check, Trash2, X, Info, AlertTriangle, CheckCircle, AlertCircle, Clock, Mail } from 'lucide-vue-next';
-import { usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -140,13 +141,22 @@ const formatFullDate = (dateString: string) => {
 const getTypeConfig = (type?: string) => {
     switch (type) {
         case 'success':
-            return { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Éxito' };
+            return { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Éxito', icon: CheckCircle };
         case 'warning':
-            return { color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', label: 'Advertencia' };
+            return { color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', label: 'Advertencia', icon: AlertTriangle };
         case 'error':
-            return { color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Error' };
+            return { color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Error', icon: AlertCircle };
         default:
-            return { color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', label: 'Información' };
+            return { color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', label: 'Información', icon: Info };
+    }
+};
+
+const getAvatarColor = (type?: string) => {
+    switch (type) {
+        case 'success': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400';
+        case 'warning': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400';
+        case 'error': return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400';
+        default: return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
     }
 };
 
@@ -158,33 +168,36 @@ const deleteAndClose = async () => {
     }
 };
 
-onMounted(() => {
-    fetchNotifications();
+const handlePusherNotification = ((event: CustomEvent) => {
+    const data = event.detail;
+    console.log('✅ NotificationDropdown received event:', data);
 
-    // Listen for global Pusher notifications dispatched from app.ts
-    window.addEventListener('pusher-notification', ((event: CustomEvent) => {
-        const data = event.detail;
-        console.log('✅ NotificationDropdown received event:', data);
+    const newNotification: Notification = {
+        id: data.notification_id || (data.user_id + '-' + Date.now()),
+        type: 'App\\Notifications\\Notification',
+        data: {
+            title: data.data?.title || 'Nueva notificación',
+            message: data.message || data.data?.message || '',
+            type: data.data?.type || 'info',
+        },
+        read_at: null,
+        created_at: data.created_at || new Date().toISOString(),
+    };
 
-        const newNotification: Notification = {
-            id: data.notification_id || (data.user_id + '-' + Date.now()),
-            type: 'App\\Notifications\\Notification',
-            data: {
-                title: data.data?.title || 'Nueva notificación',
-                message: data.message || data.data?.message || '',
-                type: data.data?.type || 'info',
-            },
-            read_at: null,
-            created_at: data.created_at || new Date().toISOString(),
-        };
-
+    // Avoid duplicates by ID
+    if (!notifications.value.some(n => n.id === newNotification.id)) {
         notifications.value.unshift(newNotification);
         unreadCount.value += 1;
-    }) as EventListener);
+    }
+}) as EventListener;
+
+onMounted(() => {
+    fetchNotifications();
+    window.addEventListener('pusher-notification', handlePusherNotification);
 });
 
 onUnmounted(() => {
-    // No Echo leave — the global subscription in app.ts stays alive forever
+    window.removeEventListener('pusher-notification', handlePusherNotification);
 });
 </script>
 
@@ -194,14 +207,13 @@ onUnmounted(() => {
             <Button
                 variant="ghost"
                 size="icon"
-                class="relative h-9 w-9 rounded-full hover:bg-accent"
+                class="relative h-9 w-9 rounded-full hover:!bg-dorado-400/20"
                 @click="fetchNotifications"
             >
                 <Bell class="h-4 w-4" />
                 <Badge
                     v-if="unreadCount > 0"
-                    variant="destructive"
-                    class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-dorado-400 text-white border-none hover:bg-dorado-500"
                 >
                     {{ unreadCount > 99 ? '99+' : unreadCount }}
                 </Badge>
@@ -209,74 +221,76 @@ onUnmounted(() => {
             </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" class="w-80">
-            <DropdownMenuLabel class="flex items-center justify-between">
-                <span>Notificaciones</span>
+        <DropdownMenuContent align="end" class="w-96 p-0">
+            <div class="flex items-center justify-between px-4 py-3">
+                <span class="text-sm font-semibold">Notificaciones</span>
                 <Button
                     v-if="unreadCount > 0"
                     variant="ghost"
                     size="sm"
                     @click="markAllAsRead"
-                    class="text-xs"
+                    class="text-xs h-7 px-2"
                 >
                     Marcar todas como leídas
                 </Button>
-            </DropdownMenuLabel>
+            </div>
 
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator class="m-0" />
 
-            <div v-if="isLoading" class="p-4 text-center text-sm text-muted-foreground">
+            <div v-if="isLoading" class="p-6 text-center text-sm text-muted-foreground">
                 Cargando...
             </div>
 
-            <div v-else-if="notifications.length === 0" class="p-4 text-center text-sm text-muted-foreground">
+            <div v-else-if="notifications.length === 0" class="p-6 text-center text-sm text-muted-foreground">
                 No tienes notificaciones
             </div>
 
-            <div v-else class="max-h-96 overflow-y-auto">
-                <DropdownMenuItem
+            <div v-else class="max-h-[400px] overflow-y-auto">
+                <div
                     v-for="notification in notifications"
                     :key="notification.id"
-                    class="flex flex-col items-start p-4 cursor-pointer hover:bg-accent/50"
+                    class="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-accent/50 border-b border-border/30 last:border-b-0"
+                    :class="{ 'bg-guinda-50/30 dark:bg-guinda-900/10': !notification.read_at }"
                     @click="openNotification(notification)"
                 >
-                    <div class="flex items-start justify-between w-full">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <h4 class="text-sm font-medium leading-none">
-                                    {{ notification.data?.title || 'Notificación' }}
-                                </h4>
-                                <div
-                                    v-if="!notification.read_at"
-                                    class="h-2 w-2 bg-guinda-600 rounded-full"
-                                ></div>
-                            </div>
-                            <p class="text-sm text-muted-foreground line-clamp-2">
-                                {{ notification.data?.message || 'Sin mensaje' }}
-                            </p>
-                            <p class="text-xs text-muted-foreground mt-1">
-                                {{ formatTimeAgo(notification.created_at) }}
-                            </p>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            class="h-6 w-6 opacity-0 group-hover:opacity-100"
-                            @click.stop="deleteNotification(notification)"
+                    <!-- Avatar -->
+                    <div class="shrink-0 mt-0.5">
+                        <div
+                            class="h-10 w-10 rounded-full flex items-center justify-center"
+                            :class="getAvatarColor(notification.data?.type)"
                         >
-                            <Trash2 class="h-3 w-3" />
-                        </Button>
+                            <component :is="getTypeConfig(notification.data?.type).icon" class="h-5 w-5" />
+                        </div>
                     </div>
-                </DropdownMenuItem>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0 space-y-0.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-sm font-medium text-foreground leading-snug line-clamp-1">
+                                {{ notification.data?.title || 'Notificación' }}
+                            </p>
+                            <div
+                                v-if="!notification.read_at"
+                                class="h-2.5 w-2.5 rounded-full bg-dorado-400 shrink-0 mt-1"
+                            ></div>
+                        </div>
+                        <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                            {{ notification.data?.message || 'Sin mensaje' }}
+                        </p>
+                        <p class="text-xs" :class="notification.read_at ? 'text-muted-foreground/70' : 'text-guinda-600 dark:text-dorado-400 font-medium'">
+                            {{ formatTimeAgo(notification.created_at) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <DropdownMenuSeparator v-if="notifications.length > 0" />
+            <DropdownMenuSeparator v-if="notifications.length > 0" class="m-0" />
 
-            <DropdownMenuItem v-if="notifications.length > 0" class="justify-center text-sm text-muted-foreground">
-                <Button variant="ghost" size="sm" as-child>
-                    <a href="/notifications">Ver todas las notificaciones</a>
+            <div v-if="notifications.length > 0" class="p-2 flex justify-center">
+                <Button variant="ghost" size="sm" as-child class="w-full text-sm text-muted-foreground hover:text-foreground">
+                    <Link href="/notifications">Ver todas las notificaciones</Link>
                 </Button>
-            </DropdownMenuItem>
+            </div>
         </DropdownMenuContent>
     </DropdownMenu>
 

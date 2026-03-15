@@ -25,13 +25,13 @@ defineProps<{
 <template>
     <Head title="Acceder al Sistema" />
 
-    <div class="min-h-screen bg-gradient-to-br from-guinda-50 via-white to-dorado-50 dark:from-guinda-950 dark:via-guinda-950 dark:to-guinda-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gradient-to-br from-dorado-100 via-dorado-50 to-guinda-100 dark:from-guinda-950 dark:via-guinda-950 dark:to-guinda-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <!-- Header con información institucional -->
         <div class="sm:mx-auto sm:w-full sm:max-w-md mb-8">
             <div class="text-center">
                 <!-- Logo institucional -->
                 <div class="flex justify-center mb-4">
-                    <div class="bg-white/70 dark:bg-white/80 rounded-xl p-2 shadow-sm border border-white/50">
+                    <div class="bg-white/80 dark:bg-white/80 rounded-xl p-2 shadow-lg shadow-guinda-200/40 border border-white/60 dark:shadow-guinda-900/50">
                         <img
                             src="/EdoMex.png"
                             alt="Logo Estado de México"
@@ -51,7 +51,7 @@ defineProps<{
         </div>
 
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="bg-white dark:bg-guinda-950/60 py-8 px-6 shadow-xl rounded-xl border border-guinda-100 dark:border-guinda-800/50">
+            <div class="bg-white dark:bg-guinda-950/60 py-8 px-6 rounded-xl border border-guinda-100 dark:border-guinda-800/50 shadow-[0_8px_40px_-4px_rgba(100,30,50,0.25),0_2px_12px_-2px_rgba(100,30,50,0.15)] dark:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.5)]">
                 <!-- Mensaje de estado -->
                 <div
                     v-if="status"

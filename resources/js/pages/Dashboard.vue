@@ -22,23 +22,23 @@ const breadcrumbs: BreadcrumbItem[] = [
         >
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-white/90 dark:border-white/20"
+                    class="relative aspect-video overflow-hidden rounded-xl border border-white/10 dark:border-white/20"
                 >
                     <PlaceholderPattern />
                 </div>
                 <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-white/90 dark:border-white/20"
+                    class="relative aspect-video overflow-hidden rounded-xl border border-white/10 dark:border-white/20"
                 >
                     <PlaceholderPattern />
                 </div>
                 <div
-                    class="relative aspect-video overflow-hidden rounded-xl border border-white/90 dark:border-white/20"
+                    class="relative aspect-video overflow-hidden rounded-xl border border-white/10 dark:border-white/20"
                 >
                     <PlaceholderPattern />
                 </div>
             </div>
             <div
-                class="relative min-h-[100vh] flex-1 rounded-xl border border-white/90 md:min-h-min dark:border-white/20"
+                class="relative min-h-[100vh] flex-1 rounded-xl border border-white/10 md:min-h-min dark:border-white/20"
             >
                 <PlaceholderPattern />
             </div>

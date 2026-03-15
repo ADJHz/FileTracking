@@ -24,4 +24,15 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
+    server: {
+        host: '127.0.0.1',
+        port:8000,
+        cors: true,
+        allowedHosts: 'all',
+        hmr: {
+            host: process.env.VITE_TUNNEL_HOST || undefined,
+            protocol: process.env.VITE_TUNNEL_HOST ? 'wss' : undefined,
+            clientPort: process.env.VITE_TUNNEL_HOST ? 443 : undefined,
+        },
+    },
 });
