@@ -1,0 +1,222 @@
+/* Tipografía oficial del Gobierno de México: Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap');
+
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@import "flowbite/src/themes/default";
+
+@plugin "flowbite/plugin";
+
+@source "../node_modules/flowbite";
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-sans:
+        'Montserrat', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* ==========================================
+       Paleta Institucional - Gobierno del Estado de México
+       Colores para uso con clases Tailwind:
+       bg-guinda-500, text-dorado-600, border-dorado-300, etc.
+       ========================================== */
+
+    /* Guinda - Color institucional primario (#9F2241) */
+    --color-guinda-50: #fef2f4;
+    --color-guinda-100: #fde6ea;
+    --color-guinda-200: #fac1cc;
+    --color-guinda-300: #f599ac;
+    --color-guinda-400: #e65c7e;
+    --color-guinda-500: #d13a5e;
+    --color-guinda-600: #9F2241;
+    --color-guinda-700: #861c37;
+    --color-guinda-800: #6d172d;
+    --color-guinda-900: #521123;
+    --color-guinda-950: #330b16;
+
+    /* Dorado contraste institucional (#94795D) */
+    --color-dorado-50: #f9f6f2;
+    --color-dorado-100: #f0e9df;
+    --color-dorado-200: #dfd0ba;
+    --color-dorado-300: #ccb493;
+    --color-dorado-400: #b69a72;
+    --color-dorado-500: #94795D;
+    --color-dorado-600: #7d6650;
+    --color-dorado-700: #655142;
+    --color-dorado-800: #4f3f34;
+    --color-dorado-900: #3d3129;
+    --color-dorado-950: #271f1a;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+@layer utilities {
+    body,
+    html {
+        --font-sans:
+            'Montserrat', ui-sans-serif, system-ui, sans-serif,
+            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+            'Noto Color Emoji';
+    }
+}
+
+/* ==========================================
+   Tema Claro - Identidad Gobierno del Estado de México
+   Primary: Guinda #9F2241
+   Contraste: Dorado #94795D
+   ========================================== */
+:root {
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(345 20% 8%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(345 20% 8%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(345 20% 8%);
+    --primary: hsl(345 66% 38%);
+    --primary-foreground: hsl(0 0% 98%);
+    --secondary: hsl(345 12% 93%);
+    --secondary-foreground: hsl(345 55% 30%);
+    --muted: hsl(345 8% 95%);
+    --muted-foreground: hsl(345 8% 45%);
+    --accent: hsl(30 23% 92%);
+    --accent-foreground: hsl(345 55% 30%);
+    --destructive: hsl(0 84.2% 60.2%);
+    --destructive-foreground: hsl(0 0% 98%);
+    --border: hsl(345 8% 90%);
+    --input: hsl(345 8% 88%);
+    --ring: hsl(345 66% 38%);
+    --chart-1: hsl(345 66% 38%);
+    --chart-2: hsl(30 23% 47%);
+    --chart-3: hsl(345 50% 52%);
+    --chart-4: hsl(30 30% 60%);
+    --chart-5: hsl(345 40% 25%);
+    --radius: 0.5rem;
+    --sidebar-background: hsl(345 66% 32%);
+    --sidebar-foreground: hsl(0 0% 96%);
+    --sidebar-primary: hsl(30 23% 55%);
+    --sidebar-primary-foreground: hsl(0 0% 98%);
+    --sidebar-accent: hsl(345 50% 36%);
+    --sidebar-accent-foreground: hsl(0 0% 96%);
+    --sidebar-border: hsl(345 55% 26%);
+    --sidebar-ring: hsl(30 23% 47%);
+    --sidebar: hsl(345 66% 32%);
+}
+
+/* ==========================================
+   Tema Oscuro - Identidad Gobierno del Estado de México
+   ========================================== */
+.dark {
+    --background: hsl(345 25% 5%);
+    --foreground: hsl(0 0% 95%);
+    --card: hsl(345 20% 7%);
+    --card-foreground: hsl(0 0% 95%);
+    --popover: hsl(345 20% 7%);
+    --popover-foreground: hsl(0 0% 95%);
+    --primary: hsl(345 66% 42%);
+    --primary-foreground: hsl(0 0% 98%);
+    --secondary: hsl(345 18% 14%);
+    --secondary-foreground: hsl(0 0% 95%);
+    --muted: hsl(345 12% 13%);
+    --muted-foreground: hsl(345 8% 58%);
+    --accent: hsl(30 15% 15%);
+    --accent-foreground: hsl(0 0% 95%);
+    --destructive: hsl(0 84% 60%);
+    --destructive-foreground: hsl(0 0% 98%);
+    --border: hsl(345 12% 15%);
+    --input: hsl(345 12% 15%);
+    --ring: hsl(345 66% 42%);
+    --chart-1: hsl(345 60% 50%);
+    --chart-2: hsl(30 28% 55%);
+    --chart-3: hsl(345 45% 40%);
+    --chart-4: hsl(30 20% 45%);
+    --chart-5: hsl(345 35% 30%);
+    --sidebar-background: hsl(345 30% 7%);
+    --sidebar-foreground: hsl(0 0% 93%);
+    --sidebar-primary: hsl(30 23% 52%);
+    --sidebar-primary-foreground: hsl(0 0% 98%);
+    --sidebar-accent: hsl(345 20% 12%);
+    --sidebar-accent-foreground: hsl(0 0% 93%);
+    --sidebar-border: hsl(345 18% 12%);
+    --sidebar-ring: hsl(30 23% 47%);
+    --sidebar: hsl(345 30% 7%);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+/* choose one of the following */
+
