@@ -74,4 +74,3 @@ class SendTestNotification extends Command
         $this->line("  ✅ Notificación creada y broadcast disparado para usuario {$user->id}");
     }
 }
-}
