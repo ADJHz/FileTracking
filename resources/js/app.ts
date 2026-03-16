@@ -12,13 +12,12 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-// Configure axios defaults for CSRF and CORS
+// Configure axios defaults for CSRF — use cookie-based XSRF exclusively
+// The XSRF-TOKEN cookie is updated by Laravel on every response, so it never goes stale
+// (unlike the meta tag which becomes outdated after Inertia SPA navigations / session regeneration)
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-if (csrfToken) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
-}
 axios.defaults.withCredentials = true;
+axios.defaults.withXSRFToken = true;
 
 // Enable Pusher logging in development
 if (import.meta.env.DEV) {
@@ -26,6 +25,7 @@ if (import.meta.env.DEV) {
 }
 
 // Initialize Echo with Pusher broadcaster — persistent connection
+// Use custom authorizer that goes through axios so CSRF cookie is sent automatically
 const echoConfig = {
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
@@ -34,12 +34,18 @@ const echoConfig = {
     encrypted: true,
     activityTimeout: 120000,
     pongTimeout: 30000,
-    authEndpoint: '/broadcasting/auth',
-    auth: {
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+    authorizer: (channel: any) => ({
+        authorize: (socketId: string, callback: (error: any, data: any) => void) => {
+            axios.post('/broadcasting/auth', {
+                socket_id: socketId,
+                channel_name: channel.name,
+            }).then((response) => {
+                callback(null, response.data);
+            }).catch((error) => {
+                callback(error, null);
+            });
         },
-    },
+    }),
 };
 
 window.Echo = new Echo(echoConfig);
@@ -58,6 +64,10 @@ window.Echo.channel('FileTracking')
     .listen('.NotificationStatusChanged', (data: any) => {
         console.log('🔔 [Global] Notification status changed via Pusher:', data);
         window.dispatchEvent(new CustomEvent('notification-status-changed', { detail: data }));
+    })
+    .listen('.task.activity', (data: any) => {
+        console.log('📋 [Global] Task activity via Pusher:', data);
+        window.dispatchEvent(new CustomEvent('task-activity', { detail: data }));
     });
 
 // Subscribe to private user channel once Inertia page is ready

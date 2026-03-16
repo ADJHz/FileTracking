@@ -36,6 +36,12 @@
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.20",
+        "@fullcalendar/daygrid": "^6.1.20",
+        "@fullcalendar/interaction": "^6.1.20",
+        "@fullcalendar/multimonth": "^6.1.20",
+        "@fullcalendar/timegrid": "^6.1.20",
+        "@fullcalendar/vue3": "^6.1.20",
         "@inertiajs/vue3": "^2.3.7",
         "@types/d3": "^7.4.3",
         "@vueuse/core": "^12.8.2",
@@ -43,6 +49,7 @@
         "clsx": "^2.1.1",
         "d3": "^7.9.0",
         "flowbite": "^4.0.1",
+        "interactjs": "^1.10.27",
         "laravel-vite-plugin": "^2.0.0",
         "lucide-vue-next": "^0.468.0",
         "reka-ui": "^2.6.1",
