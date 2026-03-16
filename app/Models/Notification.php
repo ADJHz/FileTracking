@@ -36,6 +36,9 @@ class Notification extends DatabaseNotification
                     $notification->created_at?->toISOString() ?? now()->toISOString()
                 ));
                 Log::info('Notification broadcasted to FileTracking channel', ['user_id' => $userId]);
+
+                // Broadcast dashboard update
+                \App\Helpers\DashboardBroadcaster::broadcast();
             } catch (\Throwable $e) {
                 Log::error('Failed to broadcast notification: ' . $e->getMessage());
             }

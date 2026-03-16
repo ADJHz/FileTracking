@@ -50,6 +50,14 @@ window.Echo.channel('FileTracking')
     .listen('.Notification', (data: any) => {
         console.log('✅ [Global] Notification received via Pusher (public):', data);
         window.dispatchEvent(new CustomEvent('pusher-notification', { detail: data }));
+    })
+    .listen('.DashboardUpdated', (data: any) => {
+        console.log('📊 [Global] Dashboard updated via Pusher:', data);
+        window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: data }));
+    })
+    .listen('.NotificationStatusChanged', (data: any) => {
+        console.log('🔔 [Global] Notification status changed via Pusher:', data);
+        window.dispatchEvent(new CustomEvent('notification-status-changed', { detail: data }));
     });
 
 // Subscribe to private user channel once Inertia page is ready

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotificationStatusChanged;
+use App\Helpers\DashboardBroadcaster;
 use App\Models\Notification;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -39,15 +41,34 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
+        $unreadCount = Auth::user()->unreadNotifications()->count();
+
+        broadcast(new NotificationStatusChanged(
+            'read',
+            Auth::id(),
+            $unreadCount,
+            $notification->id,
+        ));
+
+        DashboardBroadcaster::broadcast();
+
         return response()->json([
             'success' => true,
-            'unread_count' => Auth::user()->unreadNotifications()->count(),
+            'unread_count' => $unreadCount,
         ]);
     }
 
     public function markAllAsRead(Request $request): JsonResponse
     {
         Auth::user()->unreadNotifications()->update(['read_at' => now()]);
+
+        broadcast(new NotificationStatusChanged(
+            'all-read',
+            Auth::id(),
+            0,
+        ));
+
+        DashboardBroadcaster::broadcast();
 
         return response()->json([
             'success' => true,
@@ -62,11 +83,23 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $notificationId = $notification->id;
         $notification->delete();
+
+        $unreadCount = Auth::user()->unreadNotifications()->count();
+
+        broadcast(new NotificationStatusChanged(
+            'deleted',
+            Auth::id(),
+            $unreadCount,
+            $notificationId,
+        ));
+
+        DashboardBroadcaster::broadcast();
 
         return response()->json([
             'success' => true,
-            'unread_count' => Auth::user()->unreadNotifications()->count(),
+            'unread_count' => $unreadCount,
         ]);
     }
 }

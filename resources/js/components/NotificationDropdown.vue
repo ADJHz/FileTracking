@@ -191,13 +191,43 @@ const handlePusherNotification = ((event: CustomEvent) => {
     }
 }) as EventListener;
 
+// Handle real-time notification status changes (read, deleted, all-read) from other tabs/users
+const handleStatusChanged = ((event: CustomEvent) => {
+    const data = event.detail;
+    console.log('🔔 NotificationDropdown status changed:', data);
+
+    // Only process events for this user
+    if (data.userId !== props.userId) return;
+
+    if (data.action === 'read' && data.notificationId) {
+        const notif = notifications.value.find(n => n.id === data.notificationId);
+        if (notif && !notif.read_at) {
+            notif.read_at = new Date().toISOString();
+        }
+        unreadCount.value = data.unreadCount;
+    } else if (data.action === 'deleted' && data.notificationId) {
+        const index = notifications.value.findIndex(n => n.id === data.notificationId);
+        if (index > -1) {
+            notifications.value.splice(index, 1);
+        }
+        unreadCount.value = data.unreadCount;
+    } else if (data.action === 'all-read') {
+        notifications.value.forEach(n => {
+            n.read_at = n.read_at || new Date().toISOString();
+        });
+        unreadCount.value = 0;
+    }
+}) as EventListener;
+
 onMounted(() => {
     fetchNotifications();
     window.addEventListener('pusher-notification', handlePusherNotification);
+    window.addEventListener('notification-status-changed', handleStatusChanged);
 });
 
 onUnmounted(() => {
     window.removeEventListener('pusher-notification', handlePusherNotification);
+    window.removeEventListener('notification-status-changed', handleStatusChanged);
 });
 </script>
 

@@ -52,7 +52,7 @@ Route::get('/test-realtime', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Notification routes
     Route::prefix('notifications')->name('notifications.')->group(function () {
