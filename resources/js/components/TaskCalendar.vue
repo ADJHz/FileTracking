@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import FullCalendar from '@fullcalendar/vue3';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import multiMonthPlugin from '@fullcalendar/multimonth';
-import interactionPlugin from '@fullcalendar/interaction';
 import type { CalendarOptions, EventInput } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import FullCalendar from '@fullcalendar/vue3';
+import { computed } from 'vue';
 
 interface TaskStatus {
     id: number;
@@ -199,3 +199,4 @@ const calendarOptions = computed<CalendarOptions>(() => ({
     border-color: hsl(var(--border));
 }
 </style>
+

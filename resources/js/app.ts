@@ -1,14 +1,13 @@
 import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import type { DefineComponent } from 'vue';
-import { createApp, h } from 'vue';
-import '../css/app.css';
-import { initializeTheme } from '@/composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
 import axios from 'axios';
-
 import Echo from 'laravel-echo';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import Pusher from 'pusher-js';
+import { createApp, h } from 'vue';
+import type { DefineComponent } from 'vue';
+import { initializeTheme } from '@/composables/useAppearance';
+import '../css/app.css';
 
 window.Pusher = Pusher;
 
@@ -109,7 +108,6 @@ subscribeToPrivateChannel();
 document.addEventListener('inertia:finish', subscribeToPrivateChannel);
 
 console.log('📡 Echo configured & subscribed to FileTracking (persistent)');
-
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

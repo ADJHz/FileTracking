@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { Flag, CalendarDays, GripVertical, User as UserIcon } from 'lucide-vue-next';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import interact from 'interactjs';
 import axios from 'axios';
+import interact from 'interactjs';
+import { CalendarDays, User as UserIcon } from 'lucide-vue-next';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TaskStatus {
     id: number;
@@ -196,7 +196,7 @@ const setupInteract = () => {
             const statusId = Number(event.target.dataset.statusId);
             hoverColumnId.value = statusId;
         },
-        ondragleave(event) {
+        ondragleave() {
             hoverColumnId.value = null;
         },
         ondrop(event) {
@@ -325,3 +325,4 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+

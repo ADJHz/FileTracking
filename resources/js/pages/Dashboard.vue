@@ -7,8 +7,8 @@ import {
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 import { BarChart, AreaChart, DonutChart } from '@/components/charts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';

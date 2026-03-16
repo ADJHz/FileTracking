@@ -1,4 +1,4 @@
-const fs = require('fs');
+import { writeFileSync } from 'node:fs';
 const path = 'c:/xampp8.3/htdocs/FileTracking/resources/js/routes/user-password/index.ts';
 const content = `import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 
@@ -88,5 +88,5 @@ edit.form = editForm
 const userPassword = { update: Object.assign(update, update), edit: Object.assign(edit, edit) }
 export default userPassword
 `;
-fs.writeFileSync(path, content);
+writeFileSync(path, content);
 console.log('file overwritten');

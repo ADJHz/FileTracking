@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue';
-import type { Component } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import axios from 'axios';
 import {
     Plus, Search, Filter, ChevronDown, ChevronRight, Pencil, Trash2,
     CalendarDays, User as UserIcon, Flag, ListTodo, Clock, FolderOpen,
     BarChart3, CalendarRange, Loader2,
 } from 'lucide-vue-next';
-import axios from 'axios';
-import AppLayout from '@/layouts/AppLayout.vue';
+import type { Component } from 'vue';
+import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue';
 
 // Lazy-loaded tab components
 const KanbanComponent = shallowRef<Component | null>(null);
@@ -33,23 +32,24 @@ const loadCalendar = () => {
         calendarioLoading.value = false;
     });
 };
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 

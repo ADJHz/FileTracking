@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import { Bell, Trash2, Info, AlertTriangle, CheckCircle, AlertCircle, CheckCheck } from 'lucide-vue-next';
 import axios from 'axios';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Bell, Trash2, Info, AlertTriangle, CheckCircle, AlertCircle, CheckCheck } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
