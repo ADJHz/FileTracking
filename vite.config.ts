@@ -22,6 +22,7 @@ export default defineConfig({
         }),
         wayfinder({
             formVariants: true,
+            enabled: !process.env.VERCEL,
         }),
     ],
     // server: {
