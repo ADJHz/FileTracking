@@ -7,12 +7,13 @@ use App\Models\Task;
 use App\Models\TaskStatus;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $now = Carbon::now();
 
@@ -24,7 +25,6 @@ class DashboardController extends Controller
             ->whereHas('status', fn ($q) => $q->whereNotIn('name', ['Completada', 'Cancelada']))
             ->count();
 
-        // Tasks by status (for donut chart)
         $tasksByStatus = TaskStatus::withCount('tasks')
             ->orderBy('order')
             ->get()
@@ -35,7 +35,6 @@ class DashboardController extends Controller
             ])
             ->values();
 
-        // Tasks by priority (for donut chart)
         $tasksByPriority = Task::select('priority', DB::raw('COUNT(*) as total'))
             ->groupBy('priority')
             ->get()
@@ -45,7 +44,6 @@ class DashboardController extends Controller
             ])
             ->values();
 
-        // Tasks created per day (last 7 days)
         $tasksPerDay = collect(range(6, 0))->map(function ($daysAgo) use ($now) {
             $date = $now->copy()->subDays($daysAgo);
             return [
@@ -55,7 +53,6 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        // Upcoming deadlines (next 7 days, not completed/cancelled)
         $upcomingDeadlines = Task::with(['status', 'type', 'assignee'])
             ->whereBetween('due_date', [$now->toDateString(), $now->copy()->addDays(7)->toDateString()])
             ->whereHas('status', fn ($q) => $q->whereNotIn('name', ['Completada', 'Cancelada']))
@@ -84,7 +81,6 @@ class DashboardController extends Controller
             ->whereDate('created_at', $now->toDateString())
             ->count();
 
-        // Activity per day (last 7 days)
         $activityPerDay = collect(range(6, 0))->map(function ($daysAgo) use ($now) {
             $date = $now->copy()->subDays($daysAgo);
             $count = DB::table(config('activitylog.table_name', 'activity_log'))
@@ -98,7 +94,6 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        // Notifications per day (last 7 days)
         $notificationsPerDay = collect(range(6, 0))->map(function ($daysAgo) use ($now) {
             $date = $now->copy()->subDays($daysAgo);
             $count = Notification::whereDate('created_at', $date->toDateString())->count();
@@ -110,14 +105,12 @@ class DashboardController extends Controller
             ];
         })->values();
 
-        // Notification status breakdown
         $readCount = Notification::whereNotNull('read_at')->count();
         $notificationBreakdown = [
             ['label' => 'Leídas', 'value' => $readCount],
             ['label' => 'No leídas', 'value' => $unreadNotifications],
         ];
 
-        // Activity by event type
         $activityByEvent = DB::table(config('activitylog.table_name', 'activity_log'))
             ->select('event', DB::raw('COUNT(*) as total'))
             ->whereNotNull('event')
@@ -131,7 +124,6 @@ class DashboardController extends Controller
             ])
             ->values();
 
-        // Recent activity
         $recentActivity = DB::table(config('activitylog.table_name', 'activity_log'))
             ->orderByDesc('created_at')
             ->limit(5)
@@ -143,7 +135,7 @@ class DashboardController extends Controller
                 'created_at' => Carbon::parse($row->created_at)->diffForHumans(),
             ]);
 
-        return Inertia::render('Dashboard', [
+        $payload = [
             'stats' => [
                 'totalUsers' => $totalUsers,
                 'totalNotifications' => $totalNotifications,
@@ -163,6 +155,13 @@ class DashboardController extends Controller
             'notificationBreakdown' => $notificationBreakdown,
             'activityByEvent' => $activityByEvent,
             'recentActivity' => $recentActivity,
-        ]);
+            'synced_at' => now()->toISOString(),
+        ];
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json($payload);
+        }
+
+        return Inertia::render('Dashboard', $payload);
     }
 }

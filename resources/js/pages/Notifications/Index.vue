@@ -191,14 +191,29 @@ const handleStatusChanged = ((event: CustomEvent) => {
     }
 }) as EventListener;
 
+const handleNotificationsSynced = ((event: CustomEvent) => {
+    const payload = event.detail?.payload;
+    const data = payload?.notifications?.data;
+
+    if (Array.isArray(data)) {
+        allNotifications.value = [...data];
+    }
+
+    if (typeof payload?.unread_count === 'number') {
+        unreadCount.value = payload.unread_count;
+    }
+}) as EventListener;
+
 onMounted(() => {
     window.addEventListener('pusher-notification', handlePusherNotification);
     window.addEventListener('notification-status-changed', handleStatusChanged);
+    window.addEventListener('notifications-synced', handleNotificationsSynced);
 });
 
 onUnmounted(() => {
     window.removeEventListener('pusher-notification', handlePusherNotification);
     window.removeEventListener('notification-status-changed', handleStatusChanged);
+    window.removeEventListener('notifications-synced', handleNotificationsSynced);
 });
 </script>
 

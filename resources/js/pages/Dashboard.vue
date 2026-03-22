@@ -161,13 +161,27 @@ const handleDashboardUpdated = ((event: CustomEvent) => {
     if (data.notificationBreakdown) liveNotificationBreakdown.value = [...data.notificationBreakdown];
 }) as EventListener;
 
+const handleDashboardSynced = ((event: CustomEvent) => {
+    const payload = event.detail?.payload;
+    if (!payload) return;
+
+    if (payload.stats) liveStats.value = { ...payload.stats };
+    if (payload.notificationsPerDay) liveNotificationsPerDay.value = [...payload.notificationsPerDay];
+    if (payload.notificationBreakdown) liveNotificationBreakdown.value = [...payload.notificationBreakdown];
+    if (payload.activityPerDay) liveActivityPerDay.value = [...payload.activityPerDay];
+    if (payload.activityByEvent) liveActivityByEvent.value = [...payload.activityByEvent];
+    if (payload.recentActivity) liveRecentActivity.value = [...payload.recentActivity];
+}) as EventListener;
+
 onMounted(() => {
     window.addEventListener('dashboard-updated', handleDashboardUpdated);
+    window.addEventListener('dashboard-synced', handleDashboardSynced);
     setTimeout(() => { loading.value = false; }, 500);
 });
 
 onUnmounted(() => {
     window.removeEventListener('dashboard-updated', handleDashboardUpdated);
+    window.removeEventListener('dashboard-synced', handleDashboardSynced);
 });
 </script>
 

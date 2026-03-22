@@ -20,7 +20,7 @@ class NotificationController extends Controller
             ->paginate(100);
 
         // Return Inertia page for browser visits, JSON for axios/API calls
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json([
                 'notifications' => $notifications,
                 'unread_count' => $user->unreadNotifications()->count(),

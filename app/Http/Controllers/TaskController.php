@@ -31,7 +31,7 @@ class TaskController extends Controller
         $areas = Area::orderBy('order')->get();
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json(compact('tasks', 'statuses', 'types', 'areas', 'users'));
         }
 

@@ -339,13 +339,22 @@ const handleTaskActivity = ((event: CustomEvent) => {
     }
 }) as EventListener;
 
+const handleTasksSynced = ((event: CustomEvent) => {
+    const payload = event.detail?.payload;
+    if (payload?.tasks && Array.isArray(payload.tasks)) {
+        allTasks.value = [...payload.tasks];
+    }
+}) as EventListener;
+
 onMounted(() => {
     setTimeout(() => { loading.value = false; }, 400);
     window.addEventListener('task-activity', handleTaskActivity);
+    window.addEventListener('tasks-synced', handleTasksSynced);
 });
 
 onUnmounted(() => {
     window.removeEventListener('task-activity', handleTaskActivity);
+    window.removeEventListener('tasks-synced', handleTasksSynced);
 });
 </script>
 
