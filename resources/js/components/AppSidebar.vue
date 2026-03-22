@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Bell, LayoutGrid, ListChecks } from 'lucide-vue-next';
+import { LayoutGrid, ListChecks } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -15,7 +15,6 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as notificationsIndex } from '@/routes/notifications';
 import { index as tasksIndex } from '@/routes/tasks';
 import type { NavItem } from '@/types';
 
@@ -70,3 +69,4 @@ const footerNavItems: NavItem[] = [];
     </Sidebar>
     <slot />
 </template>
+
