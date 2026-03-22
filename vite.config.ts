@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath, URL } from 'node:url';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
@@ -14,6 +15,11 @@ const wayfinderEnabled = process.env.WAYFINDER_ENABLED === 'true'
         : hasPhp;
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],
