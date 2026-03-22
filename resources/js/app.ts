@@ -10,8 +10,28 @@ import { initializeTheme } from '@/composables/useAppearance';
 import '../css/app.css';
 
 type ConnectionState = 'connecting' | 'connected' | 'disconnected';
-
 type SyncReason = 'initial' | 'reconnected' | 'manual';
+type QueueFlushReason = 'connected' | 'online' | 'manual';
+type QueueableMethod = 'post' | 'put' | 'patch' | 'delete';
+
+interface PendingRequest {
+    id: string;
+    url: string;
+    method: QueueableMethod;
+    data: unknown;
+    headers: Record<string, string>;
+    attempts: number;
+    queuedAt: string;
+}
+
+const REQUEST_QUEUE_STORAGE_KEY = 'filetracking.pending-requests.v1';
+const REQUEST_QUEUE_MAX_ITEMS = 100;
+const REQUEST_QUEUE_MAX_ATTEMPTS = 5;
+
+let syncInFlight = false;
+let lastSyncAt = '';
+let realtimeConnected = false;
+let isFlushingQueue = false;
 
 window.Pusher = Pusher;
 
@@ -27,8 +47,13 @@ const echoConfig: any = {
     broadcaster: 'pusher' as const,
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'sa1',
-    forceTLS: true,
+    wsHost: import.meta.env.VITE_PUSHER_HOST || undefined,
+    wsPort: Number(import.meta.env.VITE_PUSHER_PORT || 80),
+    wssPort: Number(import.meta.env.VITE_PUSHER_PORT || 443),
+    forceTLS: (import.meta.env.VITE_PUSHER_SCHEME || 'https') === 'https',
     encrypted: true,
+    enabledTransports: ['ws', 'wss'],
+    disableStats: true,
     activityTimeout: 120000,
     pongTimeout: 30000,
     authorizer: (channel: { name: string }) => ({
@@ -56,6 +81,158 @@ const isObject = (value: unknown): value is Record<string, unknown> => {
     return typeof value === 'object' && value !== null;
 };
 
+const emitQueueSize = (count: number) => {
+    window.dispatchEvent(new CustomEvent('request-queue-updated', {
+        detail: { count, at: new Date().toISOString() },
+    }));
+};
+
+const parseQueue = (): PendingRequest[] => {
+    try {
+        const raw = localStorage.getItem(REQUEST_QUEUE_STORAGE_KEY);
+        if (!raw) return [];
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed.filter((item): item is PendingRequest => {
+            if (!isObject(item)) return false;
+
+            return (
+                typeof item.id === 'string' &&
+                typeof item.url === 'string' &&
+                typeof item.method === 'string' &&
+                ['post', 'put', 'patch', 'delete'].includes(item.method) &&
+                typeof item.attempts === 'number'
+            );
+        });
+    } catch {
+        return [];
+    }
+};
+
+const saveQueue = (queue: PendingRequest[]) => {
+    localStorage.setItem(REQUEST_QUEUE_STORAGE_KEY, JSON.stringify(queue));
+    emitQueueSize(queue.length);
+};
+
+const normalizeMethod = (method: unknown): QueueableMethod | null => {
+    if (typeof method !== 'string') return null;
+
+    const normalized = method.toLowerCase();
+
+    if (normalized === 'post' || normalized === 'put' || normalized === 'patch' || normalized === 'delete') {
+        return normalized;
+    }
+
+    return null;
+};
+
+const normalizeHeaders = (headers: unknown): Record<string, string> => {
+    if (!headers || typeof headers !== 'object') return {};
+
+    const normalized: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+        if (typeof value === 'string') {
+            normalized[key] = value;
+        }
+    }
+
+    return normalized;
+};
+
+const normalizeUrl = (url: unknown): string | null => {
+    if (typeof url !== 'string' || !url.trim()) return null;
+
+    if (url.startsWith('/')) return url;
+
+    try {
+        const parsed = new URL(url, window.location.origin);
+
+        if (parsed.origin !== window.location.origin) return null;
+
+        return parsed.pathname + parsed.search;
+    } catch {
+        return null;
+    }
+};
+
+const enqueueFailedRequest = (error: unknown): boolean => {
+    if (!axios.isAxiosError(error) || !error.config) return false;
+    if (error.response) return false;
+
+    const headers = normalizeHeaders(error.config.headers);
+    if (headers['X-Queue-Replay'] === '1') return false;
+
+    const method = normalizeMethod(error.config.method);
+    const url = normalizeUrl(error.config.url);
+    if (!method || !url) return false;
+
+    const queue = parseQueue();
+    queue.push({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        url,
+        method,
+        data: error.config.data ?? null,
+        headers,
+        attempts: 0,
+        queuedAt: new Date().toISOString(),
+    });
+
+    const boundedQueue = queue.slice(-REQUEST_QUEUE_MAX_ITEMS);
+    saveQueue(boundedQueue);
+
+    window.dispatchEvent(new CustomEvent('request-queued', {
+        detail: { url, method, queuedAt: new Date().toISOString() },
+    }));
+
+    return true;
+};
+
+const flushQueuedRequests = async (reason: QueueFlushReason = 'manual') => {
+    if (isFlushingQueue) return;
+    if (!navigator.onLine || !realtimeConnected) return;
+
+    const queue = parseQueue();
+    if (!queue.length) return;
+
+    isFlushingQueue = true;
+
+    const remaining: PendingRequest[] = [];
+
+    for (const request of queue) {
+        if (request.attempts >= REQUEST_QUEUE_MAX_ATTEMPTS) continue;
+
+        try {
+            await axios.request({
+                url: request.url,
+                method: request.method,
+                data: request.data,
+                headers: {
+                    ...request.headers,
+                    'X-Queue-Replay': '1',
+                    'X-Queue-Replay-Reason': reason,
+                },
+            });
+
+            window.dispatchEvent(new CustomEvent('request-replayed', {
+                detail: { id: request.id, url: request.url, method: request.method },
+            }));
+        } catch (error) {
+            if (axios.isAxiosError(error) && !error.response) {
+                remaining.push({
+                    ...request,
+                    attempts: request.attempts + 1,
+                });
+            }
+        }
+    }
+
+    saveQueue(remaining);
+    isFlushingQueue = false;
+};
+
 const isTaskActivityPayload = (payload: unknown): payload is { action: string; task?: { id: number } } => {
     if (!isObject(payload)) return false;
     if (typeof payload.action !== 'string') return false;
@@ -75,9 +252,6 @@ const isNotificationPayload = (payload: unknown): payload is {
     if ('user_id' in payload && typeof payload.user_id !== 'number' && payload.user_id !== undefined) return false;
     return true;
 };
-
-let syncInFlight = false;
-let lastSyncAt = '';
 
 const buildJsonConfig = () => ({
     headers: {
@@ -185,13 +359,21 @@ const subscribeRealtimeChannels = () => {
             connection.bind('connecting', () => dispatchRealtimeConnection('connecting'));
 
             connection.bind('connected', () => {
+                realtimeConnected = true;
                 dispatchRealtimeConnection('connected');
                 syncRealtimeState('reconnected');
+                void flushQueuedRequests('connected');
             });
 
-            connection.bind('disconnected', () => dispatchRealtimeConnection('disconnected'));
+            connection.bind('disconnected', () => {
+                realtimeConnected = false;
+                dispatchRealtimeConnection('disconnected');
+            });
 
-            connection.bind('unavailable', () => dispatchRealtimeConnection('disconnected'));
+            connection.bind('unavailable', () => {
+                realtimeConnected = false;
+                dispatchRealtimeConnection('disconnected');
+            });
         }
 
         syncRealtimeState('initial');
@@ -205,7 +387,33 @@ document.addEventListener('inertia:finish', subscribeRealtimeChannels);
 
 document.addEventListener('realtime-force-sync', () => {
     syncRealtimeState('manual');
+    void flushQueuedRequests('manual');
 });
+
+window.addEventListener('online', () => {
+    dispatchRealtimeConnection('connecting');
+    void flushQueuedRequests('online');
+});
+
+window.addEventListener('offline', () => {
+    realtimeConnected = false;
+    dispatchRealtimeConnection('disconnected');
+});
+
+axios.interceptors.response.use(
+    (response) => response,
+    (error: unknown) => {
+        const queued = enqueueFailedRequest(error);
+
+        if (!queued) {
+            return Promise.reject(error);
+        }
+
+        return Promise.reject(new Error('Request queued for replay after reconnect.'));
+    },
+);
+
+emitQueueSize(parseQueue().length);
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

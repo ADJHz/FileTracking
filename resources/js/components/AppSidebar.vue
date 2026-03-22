@@ -30,11 +30,11 @@ const mainNavItems: NavItem[] = [
         href: tasksIndex(),
         icon: ListChecks,
     },
-    {
-        title: 'Notificaciones',
-        href: notificationsIndex(),
-        icon: Bell,
-    },
+    // {
+    //     title: 'Notificaciones',
+    //     href: notificationsIndex(),
+    //     icon: Bell,
+    // },
 ];
 
 // Leave footer items empty or provide internal links if needed

@@ -1,13 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 
 Route::middleware(['guest'])->group(function () {
     Route::inertia('/', 'auth/Login')->name('home');
 });
 
-// Test routes — auth protected
+// Test routes - auth protected
 Route::middleware(['auth'])->group(function () {
     Route::get('/broadcast-test', function () {
         event(new \App\Events\SocketTest('Hello from server'));
@@ -53,31 +52,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
     });
 
-    // Task routes — rate limited
+    // Task routes - rate limited
     Route::prefix('tasks')->name('tasks.')->middleware('throttle:60,1')->group(function () {
         Route::get('/', [\App\Http\Controllers\TaskController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\TaskController::class, 'store'])->name('store');
         Route::put('/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('update');
         Route::delete('/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('destroy');
-    });
-
-    // REST API endpoints for integrations / realtime resync
-    Route::prefix('api/v1')->name('api.v1.')->middleware('throttle:120,1')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard.index');
-
-        Route::prefix('tasks')->name('tasks.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\TaskController::class, 'index'])->name('index');
-            Route::post('/', [\App\Http\Controllers\TaskController::class, 'store'])->name('store');
-            Route::put('/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('update');
-            Route::delete('/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::prefix('notifications')->name('notifications.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
-            Route::patch('/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-as-read');
-            Route::patch('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
-            Route::delete('/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
-        });
     });
 });
 
