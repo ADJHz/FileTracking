@@ -6,12 +6,11 @@ import {
     CalendarDays, User as UserIcon, Flag, ListTodo, Clock, FolderOpen,
     BarChart3, CalendarRange, Loader2,
 } from 'lucide-vue-next';
-import type { Component } from 'vue';
 import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue';
 
 // Lazy-loaded tab components
-const KanbanComponent = shallowRef<Component | null>(null);
-const CalendarComponent = shallowRef<Component | null>(null);
+const KanbanComponent = shallowRef<any>(null);
+const CalendarComponent = shallowRef<any>(null);
 const kanbanLoading = ref(false);
 const calendarioLoading = ref(false);
 
@@ -144,7 +143,7 @@ const emptyForm = {
     description: '',
     status_id: '',
     type_id: '',
-    area_id: '',
+    area_id: 'none',
     assigned_to: 'none',
     priority: 'media',
     due_date: '',
@@ -201,6 +200,10 @@ const activeFiltersCount = computed(() => {
     return count;
 });
 
+const isTaskFormReady = computed(() => {
+    return Boolean(form.value.title && form.value.status_id && form.value.type_id);
+});
+
 const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
     baja: { label: 'Baja', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/40' },
     media: { label: 'Media', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/40' },
@@ -233,7 +236,7 @@ const openEdit = (task: Task) => {
         description: task.description || '',
         status_id: String(task.status_id),
         type_id: String(task.type_id),
-        area_id: task.area_id ? String(task.area_id) : '',
+        area_id: task.area_id ? String(task.area_id) : 'none',
         assigned_to: task.assigned_to ? String(task.assigned_to) : 'none',
         priority: task.priority,
         due_date: task.due_date || '',
@@ -253,7 +256,7 @@ const createTask = async () => {
             ...form.value,
             status_id: Number(form.value.status_id),
             type_id: Number(form.value.type_id),
-            area_id: form.value.area_id ? Number(form.value.area_id) : null,
+            area_id: form.value.area_id !== 'none' ? Number(form.value.area_id) : null,
             assigned_to: form.value.assigned_to && form.value.assigned_to !== 'none' ? Number(form.value.assigned_to) : null,
             due_date: form.value.due_date || null,
             description: form.value.description || null,
@@ -278,7 +281,7 @@ const updateTask = async () => {
             ...form.value,
             status_id: Number(form.value.status_id),
             type_id: Number(form.value.type_id),
-            area_id: form.value.area_id ? Number(form.value.area_id) : null,
+            area_id: form.value.area_id !== 'none' ? Number(form.value.area_id) : null,
             assigned_to: form.value.assigned_to && form.value.assigned_to !== 'none' ? Number(form.value.assigned_to) : null,
             due_date: form.value.due_date || null,
             description: form.value.description || null,
@@ -453,6 +456,12 @@ onUnmounted(() => {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Todas las áreas</SelectItem>
+                        <SelectItem value="0">
+                            <div class="flex items-center gap-2">
+                                <span class="h-2.5 w-2.5 rounded-full bg-border" />
+                                Sin área
+                            </div>
+                        </SelectItem>
                         <SelectItem v-for="a in areas" :key="a.id" :value="String(a.id)">
                             <div class="flex items-center gap-2">
                                 <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: a.color }" />
@@ -814,10 +823,11 @@ onUnmounted(() => {
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <Label>Área <span class="text-red-500">*</span></Label>
-                        <Select v-model="form.area_id" required>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar área" /></SelectTrigger>
+                        <Label>Área <span class="text-xs font-normal text-muted-foreground">(opcional)</span></Label>
+                        <Select v-model="form.area_id">
+                            <SelectTrigger><SelectValue placeholder="Seleccionar área (opcional)" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="none">Sin área</SelectItem>
                                 <SelectItem v-for="a in areas" :key="a.id" :value="String(a.id)">
                                     <div class="flex items-center gap-2">
                                         <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: a.color }" />
@@ -859,7 +869,7 @@ onUnmounted(() => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" @click="showCreateDialog = false">Cancelar</Button>
-                        <Button type="submit" :disabled="saving || !form.title || !form.status_id || !form.type_id || !form.area_id" class="bg-guinda-600 hover:bg-guinda-700 text-white">
+                        <Button type="submit" :disabled="saving || !isTaskFormReady" class="bg-guinda-600 hover:bg-guinda-700 text-white">
                             <Clock v-if="saving" class="mr-2 h-4 w-4 animate-spin" />
                             Crear Tarea
                         </Button>
@@ -923,10 +933,11 @@ onUnmounted(() => {
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <Label>Área <span class="text-red-500">*</span></Label>
-                        <Select v-model="form.area_id" required>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar área" /></SelectTrigger>
+                        <Label>Área <span class="text-xs font-normal text-muted-foreground">(opcional)</span></Label>
+                        <Select v-model="form.area_id">
+                            <SelectTrigger><SelectValue placeholder="Seleccionar área (opcional)" /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="none">Sin área</SelectItem>
                                 <SelectItem v-for="a in areas" :key="a.id" :value="String(a.id)">
                                     <div class="flex items-center gap-2">
                                         <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: a.color }" />
@@ -968,7 +979,7 @@ onUnmounted(() => {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" @click="showEditDialog = false">Cancelar</Button>
-                        <Button type="submit" :disabled="saving || !form.title || !form.status_id || !form.type_id || !form.area_id" class="bg-guinda-600 hover:bg-guinda-700 text-white">
+                        <Button type="submit" :disabled="saving || !isTaskFormReady" class="bg-guinda-600 hover:bg-guinda-700 text-white">
                             <Clock v-if="saving" class="mr-2 h-4 w-4 animate-spin" />
                             Guardar Cambios
                         </Button>

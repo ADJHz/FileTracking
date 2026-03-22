@@ -60,6 +60,8 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
 ];
+
+const rightNavItems: NavItem[] = [];
 </script>
 
 <template>

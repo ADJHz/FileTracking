@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Bell, Trash2, Info, AlertTriangle, CheckCircle, AlertCircle, CheckCheck } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,9 +39,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Notificaciones', href: '/notifications' },
 ];
 
+const page = usePage();
 const allNotifications = ref<Notification[]>(props.notifications.data);
 const unreadCount = ref(props.unreadCount);
 const activeTab = ref<'all' | 'unread'>('all');
+const currentUserId = computed(() => Number((page.props.auth as { user?: { id?: number } } | undefined)?.user?.id ?? 0));
 
 const filteredNotifications = computed(() => {
     if (activeTab.value === 'unread') {
@@ -63,7 +65,7 @@ const olderNotifications = computed(() => {
 const markAsRead = async (notification: Notification) => {
     if (notification.read_at) return;
     try {
-        await axios.patch(`/notifications/${notification.id}/read`);
+        await axios.patch('/notifications/' + notification.id + '/read');
         notification.read_at = new Date().toISOString();
         unreadCount.value = Math.max(0, unreadCount.value - 1);
     } catch (error) {
@@ -85,7 +87,7 @@ const markAllAsRead = async () => {
 
 const deleteNotification = async (notification: Notification) => {
     try {
-        await axios.delete(`/notifications/${notification.id}`);
+        await axios.delete('/notifications/' + notification.id);
         const index = allNotifications.value.findIndex(n => n.id === notification.id);
         if (index > -1) {
             const wasUnread = !allNotifications.value[index].read_at;
@@ -105,10 +107,10 @@ const formatTimeAgo = (dateString: string) => {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) return 'hace un momento';
-    if (diffInSeconds < 3600) return `hace ${Math.floor(diffInSeconds / 60)} min`;
-    if (diffInSeconds < 86400) return `hace ${Math.floor(diffInSeconds / 3600)} h`;
-    if (diffInSeconds < 604800) return `hace ${Math.floor(diffInSeconds / 86400)} d`;
-    return `hace ${Math.floor(diffInSeconds / 604800)} sem`;
+    if (diffInSeconds < 3600) return 'hace ' + Math.floor(diffInSeconds / 60) + ' min';
+    if (diffInSeconds < 86400) return 'hace ' + Math.floor(diffInSeconds / 3600) + ' h';
+    if (diffInSeconds < 604800) return 'hace ' + Math.floor(diffInSeconds / 86400) + ' d';
+    return 'hace ' + Math.floor(diffInSeconds / 604800) + ' sem';
 };
 
 const getTypeConfig = (type?: string) => {
@@ -132,6 +134,72 @@ const getAvatarColor = (type?: string) => {
         default: return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400';
     }
 };
+
+const handlePusherNotification = ((event: CustomEvent) => {
+    const data = event.detail;
+
+    if (Number(data.user_id) !== currentUserId.value) return;
+
+    const notification: Notification = {
+        id: data.notification_id || String(data.user_id) + '-' + Date.now(),
+        type: 'App\\Notifications\\Notification',
+        data: {
+            title: data.data?.title || 'Nueva notificación',
+            message: data.message || data.data?.message || '',
+            type: data.data?.type || 'info',
+        },
+        read_at: null,
+        created_at: data.created_at || new Date().toISOString(),
+    };
+
+    const existingIndex = allNotifications.value.findIndex(item => item.id === notification.id);
+    if (existingIndex > -1) {
+        allNotifications.value[existingIndex] = notification;
+        return;
+    }
+
+    allNotifications.value.unshift(notification);
+    unreadCount.value += 1;
+}) as EventListener;
+
+const handleStatusChanged = ((event: CustomEvent) => {
+    const data = event.detail;
+
+    if (Number(data.userId) !== currentUserId.value) return;
+
+    if (data.action === 'read' && data.notificationId) {
+        const notification = allNotifications.value.find(item => item.id === data.notificationId);
+        if (notification && !notification.read_at) {
+            notification.read_at = new Date().toISOString();
+        }
+        unreadCount.value = data.unreadCount;
+        return;
+    }
+
+    if (data.action === 'deleted' && data.notificationId) {
+        allNotifications.value = allNotifications.value.filter(item => item.id !== data.notificationId);
+        unreadCount.value = data.unreadCount;
+        return;
+    }
+
+    if (data.action === 'all-read') {
+        allNotifications.value = allNotifications.value.map(notification => ({
+            ...notification,
+            read_at: notification.read_at || new Date().toISOString(),
+        }));
+        unreadCount.value = 0;
+    }
+}) as EventListener;
+
+onMounted(() => {
+    window.addEventListener('pusher-notification', handlePusherNotification);
+    window.addEventListener('notification-status-changed', handleStatusChanged);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('pusher-notification', handlePusherNotification);
+    window.removeEventListener('notification-status-changed', handleStatusChanged);
+});
 </script>
 
 <template>
@@ -140,7 +208,6 @@ const getAvatarColor = (type?: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col p-4 md:p-6">
             <div class="mx-auto w-full max-w-2xl">
-                <!-- Header -->
                 <div class="mb-6 flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-foreground">Notificaciones</h1>
@@ -160,7 +227,6 @@ const getAvatarColor = (type?: string) => {
                     </Button>
                 </div>
 
-                <!-- Tabs -->
                 <div class="flex items-center gap-2 mb-6">
                     <button
                         @click="activeTab = 'all'"
@@ -192,7 +258,6 @@ const getAvatarColor = (type?: string) => {
                     </button>
                 </div>
 
-                <!-- Empty state -->
                 <div
                     v-if="filteredNotifications.length === 0"
                     class="flex flex-col items-center justify-center py-16 text-center"
@@ -208,9 +273,7 @@ const getAvatarColor = (type?: string) => {
                     </p>
                 </div>
 
-                <!-- Notifications list -->
                 <div v-else>
-                    <!-- New notifications section -->
                     <div v-if="newNotifications.length > 0" class="mb-6">
                         <h2 class="text-sm font-semibold text-foreground mb-3 px-1">Nuevas</h2>
                         <div class="space-y-1">
@@ -225,7 +288,6 @@ const getAvatarColor = (type?: string) => {
                                 ]"
                                 @click="markAsRead(notification)"
                             >
-                                <!-- Avatar -->
                                 <div class="relative shrink-0">
                                     <Avatar class="h-12 w-12">
                                         <AvatarFallback :class="getAvatarColor(notification.data?.type)">
@@ -240,7 +302,6 @@ const getAvatarColor = (type?: string) => {
                                     </div>
                                 </div>
 
-                                <!-- Content -->
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm text-foreground">
                                         <span class="font-semibold">{{ notification.data?.title || 'Notificación' }}</span>
@@ -252,7 +313,6 @@ const getAvatarColor = (type?: string) => {
                                     </p>
                                 </div>
 
-                                <!-- Actions -->
                                 <div class="flex items-center gap-1 shrink-0">
                                     <div
                                         v-if="!notification.read_at"
@@ -273,7 +333,6 @@ const getAvatarColor = (type?: string) => {
                         </div>
                     </div>
 
-                    <!-- Older notifications section -->
                     <div v-if="olderNotifications.length > 0">
                         <h2 class="text-sm font-semibold text-foreground mb-3 px-1">Anteriores</h2>
                         <div class="space-y-1">
@@ -288,7 +347,6 @@ const getAvatarColor = (type?: string) => {
                                 ]"
                                 @click="markAsRead(notification)"
                             >
-                                <!-- Avatar -->
                                 <div class="relative shrink-0">
                                     <Avatar class="h-12 w-12">
                                         <AvatarFallback :class="getAvatarColor(notification.data?.type)">
@@ -303,7 +361,6 @@ const getAvatarColor = (type?: string) => {
                                     </div>
                                 </div>
 
-                                <!-- Content -->
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm text-foreground">
                                         <span class="font-semibold">{{ notification.data?.title || 'Notificación' }}</span>
@@ -315,7 +372,6 @@ const getAvatarColor = (type?: string) => {
                                     </p>
                                 </div>
 
-                                <!-- Actions -->
                                 <div class="flex items-center gap-1 shrink-0">
                                     <div
                                         v-if="!notification.read_at"

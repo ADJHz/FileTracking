@@ -11,37 +11,32 @@ import '../css/app.css';
 
 window.Pusher = Pusher;
 
-// Configure axios defaults for CSRF — use cookie-based XSRF exclusively
-// The XSRF-TOKEN cookie is updated by Laravel on every response, so it never goes stale
-// (unlike the meta tag which becomes outdated after Inertia SPA navigations / session regeneration)
+// Configure axios defaults for CSRF - use cookie-based XSRF exclusively
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
 
-// Enable Pusher logging in development
 if (import.meta.env.DEV) {
     Pusher.logToConsole = true;
 }
 
-// Initialize Echo with Pusher broadcaster — persistent connection
-// Use custom authorizer that goes through axios so CSRF cookie is sent automatically
-const echoConfig = {
-    broadcaster: 'pusher',
+const echoConfig: any = {
+    broadcaster: 'pusher' as const,
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'sa1',
     forceTLS: true,
     encrypted: true,
     activityTimeout: 120000,
     pongTimeout: 30000,
-    authorizer: (channel: any) => ({
-        authorize: (socketId: string, callback: (error: any, data: any) => void) => {
+    authorizer: (channel: { name: string }) => ({
+        authorize: (socketId: string, callback: (error: Error | null, data: unknown) => void) => {
             axios.post('/broadcasting/auth', {
                 socket_id: socketId,
                 channel_name: channel.name,
             }).then((response) => {
                 callback(null, response.data);
-            }).catch((error) => {
-                callback(error, null);
+            }).catch((error: unknown) => {
+                callback(error instanceof Error ? error : new Error("Broadcast auth failed"), null);
             });
         },
     }),
@@ -50,72 +45,74 @@ const echoConfig = {
 window.Echo = new Echo(echoConfig);
 configureEcho(echoConfig);
 
-// Global persistent subscription to FileTracking public channel — NEVER leaves
-window.Echo.channel('FileTracking')
-    .listen('.Notification', (data: any) => {
-        console.log('✅ [Global] Notification received via Pusher (public):', data);
-        window.dispatchEvent(new CustomEvent('pusher-notification', { detail: data }));
-    })
-    .listen('.DashboardUpdated', (data: any) => {
-        console.log('📊 [Global] Dashboard updated via Pusher:', data);
-        window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: data }));
-    })
-    .listen('.NotificationStatusChanged', (data: any) => {
-        console.log('🔔 [Global] Notification status changed via Pusher:', data);
-        window.dispatchEvent(new CustomEvent('notification-status-changed', { detail: data }));
-    })
-    .listen('.task.activity', (data: any) => {
-        console.log('📋 [Global] Task activity via Pusher:', data);
-        window.dispatchEvent(new CustomEvent('task-activity', { detail: data }));
-    });
-
-// Subscribe to private user channel once Inertia page is ready
-// This ensures notifications are received on ALL pages, not just dashboard
-const subscribeToPrivateChannel = () => {
+const subscribeRealtimeChannels = () => {
     try {
-        // Get user ID from Inertia page props embedded in the DOM
         const pageEl = document.getElementById('app');
-        if (pageEl) {
-            const dataPage = pageEl.getAttribute('data-page');
-            if (dataPage) {
-                const pageData = JSON.parse(dataPage);
-                const userId = pageData?.props?.auth?.user?.id;
-                if (userId && !(window as any).__notifChannelSubscribed) {
-                    (window as any).__notifChannelSubscribed = true;
-                    window.Echo.private(`notifications.${userId}`)
-                        .listen('.notification.sent', (data: any) => {
-                            console.log('✅ [Private] Notification received via Pusher:', data);
-                            const detail = {
-                                notification_id: data.notification?.id,
-                                user_id: userId,
-                                message: data.notification?.data?.message,
-                                data: data.notification?.data,
-                                created_at: data.notification?.created_at,
-                            };
-                            window.dispatchEvent(new CustomEvent('pusher-notification', { detail }));
-                        });
-                    console.log(`🔒 Subscribed to private channel notifications.${userId}`);
-                }
-            }
-        }
+        if (!pageEl) return;
+
+        const dataPage = pageEl.getAttribute('data-page');
+        if (!dataPage) return;
+
+        const pageData = JSON.parse(dataPage);
+        const userId = pageData?.props?.auth?.user?.id;
+
+        if (!userId || (window as Window & { __fileTrackingSubscribed?: boolean }).__fileTrackingSubscribed) return;
+
+        (window as Window & { __fileTrackingSubscribed?: boolean }).__fileTrackingSubscribed = true;
+
+        window.Echo.private('filetracking')
+            .listen('.DashboardUpdated', (data: unknown) => {
+                window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: data }));
+            })
+            .listen('.task.activity', (data: unknown) => {
+                window.dispatchEvent(new CustomEvent('task-activity', { detail: data }));
+            });
+
+        window.Echo.private('notifications.' + userId)
+            .listen('.Notification', (data: unknown) => {
+                window.dispatchEvent(new CustomEvent('pusher-notification', { detail: data }));
+            })
+            .listen('.notification.sent', (data: unknown) => {
+                const typedData = data as {
+                    notification?: {
+                        id?: string;
+                        data?: {
+                            message?: string;
+                            title?: string;
+                            type?: string;
+                        };
+                        created_at?: string;
+                    };
+                };
+
+                const detail = {
+                    notification_id: typedData.notification?.id,
+                    user_id: userId,
+                    message: typedData.notification?.data?.message,
+                    data: typedData.notification?.data,
+                    created_at: typedData.notification?.created_at,
+                };
+
+                window.dispatchEvent(new CustomEvent('pusher-notification', { detail }));
+            })
+            .listen('.NotificationStatusChanged', (data: unknown) => {
+                window.dispatchEvent(new CustomEvent('notification-status-changed', { detail: data }));
+            });
     } catch (e) {
-        console.error('Failed to subscribe to private notification channel:', e);
+        console.error('Failed to subscribe to realtime channels:', e);
     }
 };
 
-// Try subscribing immediately and also after Inertia navigations
-subscribeToPrivateChannel();
-document.addEventListener('inertia:finish', subscribeToPrivateChannel);
-
-console.log('📡 Echo configured & subscribed to FileTracking (persistent)');
+subscribeRealtimeChannels();
+document.addEventListener('inertia:finish', subscribeRealtimeChannels);
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => (title ? title + ' - ' + appName : appName),
     resolve: (name) =>
         resolvePageComponent(
-            `./pages/${name}.vue`,
+            './pages/' + name + '.vue',
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
@@ -128,5 +125,4 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on page load...
 initializeTheme();

@@ -9,9 +9,11 @@ use App\Models\Task;
 use App\Models\TaskStatus;
 use App\Models\TaskType;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -43,7 +45,7 @@ class TaskController extends Controller
             'description' => 'nullable|string|max:2000',
             'status_id' => 'required|exists:task_statuses,id',
             'type_id' => 'required|exists:task_types,id',
-            'area_id' => 'required|exists:areas,id',
+            'area_id' => 'nullable|exists:areas,id',
             'assigned_to' => 'nullable|exists:users,id',
             'priority' => ['required', Rule::in(['baja', 'media', 'alta', 'urgente'])],
             'due_date' => 'nullable|date',
@@ -56,9 +58,8 @@ class TaskController extends Controller
         }
 
         $validated['created_by'] = Auth::id();
-        $validated['task_id'] = $this->generateTaskId();
 
-        $task = Task::create($validated);
+        $task = $this->createTaskWithUniqueId($validated);
         $task->load(['status', 'type', 'area', 'assignee', 'creator']);
 
         $user = Auth::user();
@@ -80,7 +81,7 @@ class TaskController extends Controller
             'description' => 'nullable|string|max:2000',
             'status_id' => 'sometimes|required|exists:task_statuses,id',
             'type_id' => 'sometimes|required|exists:task_types,id',
-            'area_id' => 'sometimes|required|exists:areas,id',
+            'area_id' => 'sometimes|nullable|exists:areas,id',
             'assigned_to' => 'nullable|exists:users,id',
             'priority' => ['sometimes', 'required', Rule::in(['baja', 'media', 'alta', 'urgente'])],
             'due_date' => 'nullable|date',
@@ -137,8 +138,6 @@ class TaskController extends Controller
     public function destroy(Task $task): JsonResponse
     {
         $user = Auth::user();
-        $taskId = $task->task_id;
-        $taskTitle = $task->title;
 
         $this->broadcastTaskActivity('deleted', $task, $user->name);
 
@@ -147,12 +146,50 @@ class TaskController extends Controller
         return response()->json(['success' => true]);
     }
 
+    private function createTaskWithUniqueId(array $validated): Task
+    {
+        $maxAttempts = 5;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return DB::transaction(function () use ($validated) {
+                    $validated['task_id'] = $this->generateTaskId();
+
+                    return Task::create($validated);
+                });
+            } catch (QueryException $e) {
+                if (! $this->isTaskIdCollision($e) || $attempt === $maxAttempts) {
+                    throw $e;
+                }
+            }
+        }
+
+        throw new \RuntimeException('Unable to create a task with a unique task_id.');
+    }
+
     private function generateTaskId(): string
     {
-        $last = Task::withTrashed()->orderByDesc('id')->first();
-        $nextNum = $last ? ((int) substr($last->task_id, -3)) + 1 : 1;
+        $lastTaskId = Task::withTrashed()
+            ->lockForUpdate()
+            ->orderByDesc('id')
+            ->value('task_id');
+
+        if (! $lastTaskId) {
+            return 'TMYT-001';
+        }
+
+        preg_match('/(\d+)$/', $lastTaskId, $matches);
+        $nextNum = isset($matches[1]) ? ((int) $matches[1]) + 1 : 1;
 
         return 'TMYT-' . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
+    }
+
+    private function isTaskIdCollision(QueryException $e): bool
+    {
+        $sqlState = (string) ($e->errorInfo[0] ?? '');
+        $isUniqueViolation = in_array($sqlState, ['23000', '23505'], true);
+
+        return $isUniqueViolation && str_contains(strtolower($e->getMessage()), 'task_id');
     }
 
     private function broadcastTaskActivity(string $action, Task $task, string $userName, ?string $field = null, ?string $old = null, ?string $new = null): void

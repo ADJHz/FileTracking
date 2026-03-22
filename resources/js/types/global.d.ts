@@ -1,4 +1,14 @@
+import type Echo from 'laravel-echo';
+import type Pusher from 'pusher-js';
 import type { Auth } from '@/types/auth';
+
+declare global {
+    interface Window {
+        Pusher: typeof Pusher;
+        Echo: Echo;
+        __fileTrackingSubscribed?: boolean;
+    }
+}
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -21,13 +31,5 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             [key: string]: unknown;
         };
-    }
-}
-
-declare module 'vue' {
-    interface ComponentCustomProperties {
-        $inertia: typeof Router;
-        $page: Page;
-        $headManager: ReturnType<typeof createHeadManager>;
     }
 }

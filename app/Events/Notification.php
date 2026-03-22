@@ -2,8 +2,8 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -37,8 +37,14 @@ class Notification implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
+        if ($this->user_id) {
+            return [
+                new PrivateChannel('notifications.' . $this->user_id),
+            ];
+        }
+
         return [
-            new Channel('FileTracking'),
+            new PrivateChannel('filetracking'),
         ];
     }
 
