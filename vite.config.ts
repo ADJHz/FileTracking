@@ -1,8 +1,17 @@
+import { spawnSync } from 'node:child_process';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+
+const phpCheck = spawnSync('php', ['-v'], { stdio: 'ignore' });
+const hasPhp = phpCheck.status === 0 && !phpCheck.error;
+const wayfinderEnabled = process.env.WAYFINDER_ENABLED === 'true'
+    ? true
+    : process.env.WAYFINDER_ENABLED === 'false'
+        ? false
+        : hasPhp;
 
 export default defineConfig({
     plugins: [
@@ -20,10 +29,13 @@ export default defineConfig({
                 },
             },
         }),
-        wayfinder({
-            formVariants: true,
-            enabled: !process.env.VERCEL,
-        }),
+        ...(wayfinderEnabled
+            ? [
+                wayfinder({
+                    formVariants: true,
+                }),
+            ]
+            : []),
     ],
     // server: {
     //     host: '127.0.0.1',
