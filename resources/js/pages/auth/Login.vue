@@ -9,9 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
-import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+import { register } from '@/routes/index';
+import { store } from '@/routes/login/index';
+import { request } from '@/routes/password/index';
 
 const showPassword = ref(false);
 
@@ -222,3 +222,4 @@ defineProps<{
         </div>
     </div>
 </template>
+

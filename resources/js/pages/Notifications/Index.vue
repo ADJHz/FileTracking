@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/index';
 import type { BreadcrumbItem } from '@/types';
 
 interface Notification {
@@ -411,3 +411,4 @@ onUnmounted(() => {
         </div>
     </AppLayout>
 </template>
+

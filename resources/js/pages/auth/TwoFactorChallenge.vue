@@ -10,7 +10,7 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { store } from '@/routes/two-factor/login';
+import { store } from '@/routes/two-factor/login/index';
 import type { TwoFactorConfigContent } from '@/types';
 
 const authConfigContent = computed<TwoFactorConfigContent>(() => {
@@ -131,3 +131,4 @@ const code = ref<string>('');
         </div>
     </AuthLayout>
 </template>
+

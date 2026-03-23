@@ -21,7 +21,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
-import { confirm } from '@/routes/two-factor';
+import { confirm } from '@/routes/two-factor/index';
 import type { TwoFactorConfigContent } from '@/types';
 
 type Props = {
@@ -294,3 +294,4 @@ watch(
         </DialogContent>
     </Dialog>
 </template>
+

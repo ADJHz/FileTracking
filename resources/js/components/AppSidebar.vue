@@ -14,8 +14,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import { index as tasksIndex } from '@/routes/tasks';
+import { dashboard } from '@/routes/index';
+import { index as tasksIndex } from '@/routes/tasks/index';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -69,4 +69,5 @@ const footerNavItems: NavItem[] = [];
     </Sidebar>
     <slot />
 </template>
+
 

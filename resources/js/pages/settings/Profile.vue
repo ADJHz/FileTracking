@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
+import { edit } from '@/routes/profile/index';
+import { send } from '@/routes/verification/index';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -128,3 +128,4 @@ const user = computed(() => page.props.auth.user);
         </SettingsLayout>
     </AppLayout>
 </template>
+

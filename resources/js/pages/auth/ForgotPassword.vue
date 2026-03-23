@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { login } from '@/routes';
-import { email } from '@/routes/password';
+import { login } from '@/routes/index';
+import { email } from '@/routes/password/index';
 
 defineProps<{
     status?: string;
@@ -63,3 +63,4 @@ defineProps<{
         </div>
     </AuthLayout>
 </template>
+

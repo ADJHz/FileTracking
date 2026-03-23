@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/index';
 import type { BreadcrumbItem } from '@/types';
 
 interface ChartDataItem {
@@ -553,3 +553,4 @@ onUnmounted(() => {
         </div>
     </AppLayout>
 </template>
+

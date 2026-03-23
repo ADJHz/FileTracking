@@ -49,7 +49,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/index';
 import type { BreadcrumbItem } from '@/types';
 
 interface TaskStatus {
@@ -1022,3 +1022,4 @@ onUnmounted(() => {
         </Dialog>
     </AppLayout>
 </template>
+
